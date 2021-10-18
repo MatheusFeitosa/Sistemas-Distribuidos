@@ -13,11 +13,13 @@ def buscarNos(sock):
     msg = sock.recv(1024)
     tam = str(msg, encoding = 'utf-8')
     portas = []
-    for in range(tam):
+    print(tam)
+    tam = int(tam)
+    for i in range(tam):
         msg = sock.recv(1024)
         porta = str(msg, encoding = 'utf-8')
         portas.append(int(porta))
-    return Nos
+    return portas
 
 def buscarNo(Nos):
     tamanho = len(Nos)
@@ -32,17 +34,22 @@ def adicionarChaves(Nos, Chaves):
 
         porta = buscarNo(Nos)
     
-        sockNovo = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-        sockNovo.connect(('localhost', porta))
+        sockNovo = socket.socket()
+        print(porta)
+        sockNovo.connect(('localhost', int(porta)))
 
         sockNovo.send(str.encode('Adicionar'))
-        sockNovo.send(str.encode(Chaves))
-        
-        sockNovo.close()
+        msg = sockNovo.recv(1024)
+        resposta = str(msg, encoding = 'utf-8')
 
         if not(resposta == 'Estou inativo'):
+            sockNovo.send(str.encode(Chaves))
+            msg = sockNovo.recv(1024)
+            resposta = str(msg, encoding = 'utf-8')
+            print(resposta)
+            sockNovo.close()
             return 0
+        sockNovo.close()
 
     print('Tente mais tarde')
 
@@ -53,17 +60,25 @@ def removerChaves(Nos, chave):
 
         porta = buscarNo(Nos)
 
-        sockNovo = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sockNovo = socket.socket()
 
         sockNovo.connect(('localhost', porta))
 
         sockNovo.send(str.encode('Remover'))
-        sockNovo.send(str.encode(chave))
+        msg = sockNovo.recv(1024)
+        resposta = str(msg, encoding = 'utf-8')
 
-        sockNovo.close()
+        
 
         if not(resposta == 'Estou inativo'):
+            sockNovo.send(str.encode(chave))
+            msg = sockNovo.recv(1024)
+            resposta = str(msg, encoding = 'utf-8')
+            print(resposta)
+            sockNovo.close()
             return 0
+
+        sockNovo.close()
 
     print('Tente mais tarde')
 
@@ -73,19 +88,22 @@ def buscarValor(Nos, chave):
 
         porta = buscarNo(Nos)
 
-        sockNovo = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sockNovo = socket.socket()
 
         sockNovo.connect(('localhost', porta))
 
         sockNovo.send(str.encode('Buscar'))
-        sockNovo.send(str.encode(chave))
-        valor = sockNovo.recv(1024)
-        resposta = str(msg, encoding = 'utf-8'))
-        sockNovo.close()
-    
+        msg = sockNovo.recv(1024)
+        resposta = str(msg, encoding = 'utf-8')
+
         if not(resposta == 'Estou inativo'):
+            sockNovo.send(str.encode(chave))
+            msg = sockNovo.recv(1024)
+            resposta = str(msg, encoding = 'utf-8')
             print(resposta)
+            sockNovo.close()
             return 0
+        sockNovo.close()
 
     print('Tente mais tarde')
 
@@ -94,7 +112,7 @@ def main():
 
     HOST = 'localhost'
 
-    PORTA = 5788
+    PORTA = 4988
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -133,4 +151,10 @@ def main():
             else:
                 print('Error!')
 
+        if(str(action) == '4'):
+            print('Encerrando')
+            sock.send(str.encode('Encerrar'))
+            sock.close()
+            break
 
+main()

@@ -7,10 +7,14 @@ import os
 import time
 
 HOST = '' 
-PORT = 5788
+PORT = 4988
+
+entradas = [sys.stdin]
+conexoes = {}
 
 N = 10
 
+nosfilhos = []
 processos = []
 ativos = []
 portas = []
@@ -18,6 +22,7 @@ portas = []
 def criarNos():
     for i in range(N):
         PORTA = PORT + i + 1
+        PORTA = str(PORTA)
         criarNo(i, N, PORTA)
 
 #Referencia https://stackabuse.com/executing-shell-commands-with-python/
@@ -29,23 +34,29 @@ def criarNo(id, tamanho, PORTA):
     conectarInicio(PORTA)
 
 def conectarInicio(PORTA):
-    sockInicio = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sockInicio = socket.socket()
     sockInicio.connect(('localhost',int(PORTA)))
     sockInicio.send(str.encode('oi'))
     msg = sockInicio.recv(1024)
     print(str(msg, encoding = 'utf-8'))
-    sockInicio.close()
+    nosfilhos.append(sockInicio)
 
 def finalizar():
-    for i in portas:
-        sockFim = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sockFim.connect(('localhost', i))
-        sockFim.send(str.encode('exit'))
-        sockFim.close()
+    for i in nosfilhos:
+        i.send(str.encode('exit'))
+        time.sleep(1)
+        i.close()
+        print('finalizando o processo filho')
 
 
 def ativar():
-    None
+    n = input()
+    nosfilhos[int(n)].send(str.encode('Ativar'))
+    msg = nosfilhos[int(n)].recv(1024)
+    print(str(msg, encoding = 'utf-8'))
+    ativos.append(n)
+    for i in ativos:
+        atualizar(i)
 
 def desativar(n):
     None
@@ -57,32 +68,73 @@ def atualizar(n):
     None
 
 def iniciaServidor():
-	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	
+    sock.bind((HOST, PORT))
 
-	sock.bind((HOST, PORT))
+    sock.listen(5)
 
-	sock.listen(5)
+    sock.setblocking(False)
 
-	sock.setblocking(False)
+    entradas.append(sock)
 
-	entradas.append(sock)
-
-	return sock
+    return sock
 
 def aceitaConexao(sock):
 
-	clisock, endr = sock.accept()
+    clisock, endr = sock.accept()
 
-	conexoes[clisock] = endr 
+    conexoes[clisock] = endr 
 
-	return clisock, endr
+    return clisock, endr
 
 def atendeRequisicoes(clisock, endr):
 
-	None
+    data = clisock.recv(1024)
+        
+    if (str(data, encoding = 'utf-8') == "Encerrar"):
+        del conexoes[clisock]
+        entradas.remove(clisock)
+        clisock.close()
+
+    if (str(data, encoding = 'utf-8') == "Buscar"):
+        quantidade = str(N)
+        clisock.send(str.encode(quantidade))
+        for i in portas:
+            time.sleep(1)
+            clisock.send(str.encode(str(i)))
+        
+    
 
 def main():
     criarNos()
-    finalizar()
+    
+    sock = iniciaServidor()
+    print("Pronto para receber conexoes...")
+    while True:
+        leitura, escrita, excecao = select.select(entradas, [], [])
+        for pronto in leitura:
+            if pronto == sock:
+                clisock, endr = aceitaConexao(sock)
+                print ('Conectado com: ', endr)
+                clisock.setblocking(False)
+                entradas.append(clisock)
+            elif pronto == sys.stdin:
+                cmd = input()
+                if cmd == 'fim':
+                    if not conexoes:
+                        finalizar()
+                        sock.close()
+                        sys.exit()
+                    else:
+                        print("ha conexoes ativas")
+                elif cmd == 'hist':
+                    print(str(conexoes.values()))
+                
+                elif cmd == 'ativar':
+                    ativar()
+
+            else:
+                atendeRequisicoes(pronto, conexoes[pronto])
 
 main()

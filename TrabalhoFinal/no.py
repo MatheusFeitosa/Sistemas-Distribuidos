@@ -4,13 +4,12 @@ import select
 import sys
 import subprocess
 import os
+import time
 
-#0 = inativo, 1 = ativo
-estado = 0
 
-entradas = [sys.stdin]
+entradas = []
 conexoes = {}
-
+estado = []
 #Finger table
 inicio = []
 sucessor = {}
@@ -22,7 +21,7 @@ def iniciaServidor(HOST, PORT):
 
     sock.bind((HOST, int(PORT)))
 
-    sock.listen(5)
+    sock.listen(50)
 
     sock.setblocking(False)
     
@@ -42,14 +41,60 @@ def aceitaConexao(sock):
 def atendeRequisicoes(clisock, endr):
 
     data = clisock.recv(1024)
-        
-    if (str(data, encoding = 'utf-8') == "oi"):
+    dataD = str(data, encoding = 'utf-8')        
+    if (dataD == "oi"):
         clisock.send(str.encode(sys.argv[1]))
-	
-    del conexoes[clisock]
-    entradas.remove(clisock)
-    clisock.close()
-    if str(data, encoding = 'utf-8') == "exit":
+
+    if (dataD == "Ativar"):
+        estado[0] = 1
+        clisock.send(str.encode(str(estado[0])))
+    
+
+    if (dataD == "Buscar"):
+        if(estado[0] == 0):
+            clisock.send(str.encode('Estou inativo'))
+        else:
+            clisock.send(str.encode('Estou ativo'))
+            time.sleep(1)
+            msg = clisock.recv(1024)
+            mensagem = str(msg, encoding = 'utf-8')
+            clisock.send(str.encode(str(hash(mensagem))))
+        del conexoes[clisock]
+        entradas.remove(clisock)
+        clisock.close()
+
+    if (dataD == "Remover"):
+        if(estado[0] == 0):
+            clisock.send(str.encode('Estou inativo'))
+        else:
+            clisock.send(str.encode('Estou ativo'))
+            time.sleep(1)
+            msg = clisock.recv(1024)
+            mensagem = str(msg, encoding = 'utf-8')
+            clisock.send(str.encode(str(hash(mensagem))))
+        del conexoes[clisock]
+        entradas.remove(clisock)
+        clisock.close()
+
+
+    if (dataD == "Adicionar"):
+        if(estado[0] == 0):
+            clisock.send(str.encode('Estou inativo'))
+        else:
+            clisock.send(str.encode('Estou ativo'))
+            time.sleep(1)
+            msg = clisock.recv(1024)
+            mensagem = str(msg, encoding = 'utf-8')
+            partes = mensagem.split()
+            clisock.send(str.encode(str(hash(partes[0]))))
+        del conexoes[clisock]
+        entradas.remove(clisock)
+        clisock.close()
+
+
+
+
+    if dataD == "exit":
         return 1
     return 0
 
@@ -59,7 +104,7 @@ def main():
     id = int(sys.argv[1])
     PORT = int(sys.argv[2])
     tamanho = int(sys.argv[3])
-
+    estado.append(0)
     sock = iniciaServidor('',PORT)
     while True:
         leitura, escrita, excecao = select.select(entradas, [], [])
