@@ -5,14 +5,16 @@ import sys
 import subprocess
 import os
 import time
+import math
+
 
 HOST = '' 
-PORT = 4988
+PORT = 5300
 
 entradas = [sys.stdin]
 conexoes = {}
 
-N = 10
+N = 8
 
 nosfilhos = []
 processos = []
@@ -58,14 +60,36 @@ def ativar():
     for i in ativos:
         atualizar(i)
 
-def desativar(n):
-    None
-    ativos.drop(n)
+def desativar():
+    n = input()
+    nosfilhos[int(n)].send(str.encode('Desativar'))
+    msg = nosfilhos[int(n)].recv(1024)
+    print(str(msg, encoding = 'utf-8'))
+    ativos.remove(n)
     for i in ativos:
         atualizar(i)
 
 def atualizar(n):
-    None
+    print("No")
+    print(n)
+    etapas = math.floor(math.log(N,2))
+    for i in range(etapas):
+        print("Alcance")
+        print(2**i)
+        aux = 0
+        menor = N + 1
+        menorGlobal = N + 1
+        for j in ativos:
+            num = int(j) - int(n)
+            if( int(num%N) >= int(2**int(i))):
+                menor = min(int(menor), int(num%N))
+                aux = 1
+            menorGlobal = min(int(menorGlobal), int(num%N))
+        if(aux == 0):
+            menor = menorGlobal
+        print("sucessor")
+        print((int(menor) +int(n))%int(N))
+        
 
 def iniciaServidor():
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -133,6 +157,9 @@ def main():
                 
                 elif cmd == 'ativar':
                     ativar()
+               
+                elif cmd == 'desativar':
+                    desativar()
 
             else:
                 atendeRequisicoes(pronto, conexoes[pronto])

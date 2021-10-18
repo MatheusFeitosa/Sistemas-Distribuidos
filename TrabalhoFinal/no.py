@@ -6,6 +6,10 @@ import subprocess
 import os
 import time
 
+hashseed = os.getenv('PYTHONHASHSEED')
+if not hashseed:
+    os.environ['PYTHONHASHSEED'] = '0'
+    os.execv(sys.executable, [sys.executable] + sys.argv)
 
 entradas = []
 conexoes = {}
@@ -49,6 +53,11 @@ def atendeRequisicoes(clisock, endr):
         estado[0] = 1
         clisock.send(str.encode(str(estado[0])))
     
+    if (dataD == "Desativar"):
+        estado[0] = 0
+        clisock.send(str.encode(str(estado[0])))
+
+
 
     if (dataD == "Buscar"):
         if(estado[0] == 0):
