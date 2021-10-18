@@ -9,7 +9,7 @@ import math
 
 
 HOST = '' 
-PORT = 5300
+PORT = 5500
 
 entradas = [sys.stdin]
 conexoes = {}
@@ -56,26 +56,25 @@ def ativar():
     nosfilhos[int(n)].send(str.encode('Ativar'))
     msg = nosfilhos[int(n)].recv(1024)
     print(str(msg, encoding = 'utf-8'))
-    ativos.append(n)
-    for i in ativos:
-        atualizar(i)
+    if not(n in ativos):
+        ativos.append(n)
+        for i in ativos:
+            atualizar(i)
 
 def desativar():
     n = input()
     nosfilhos[int(n)].send(str.encode('Desativar'))
     msg = nosfilhos[int(n)].recv(1024)
     print(str(msg, encoding = 'utf-8'))
-    ativos.remove(n)
-    for i in ativos:
-        atualizar(i)
+    if(n in ativos):
+        ativos.remove(n)
+        for i in ativos:
+            atualizar(i)
 
 def atualizar(n):
-    print("No")
-    print(n)
     etapas = math.floor(math.log(N,2))
     for i in range(etapas):
-        print("Alcance")
-        print(2**i)
+        alcance = (2**i)
         aux = 0
         menor = N + 1
         menorGlobal = N + 1
@@ -87,9 +86,19 @@ def atualizar(n):
             menorGlobal = min(int(menorGlobal), int(num%N))
         if(aux == 0):
             menor = menorGlobal
-        print("sucessor")
-        print((int(menor) +int(n))%int(N))
-        
+        sucessor = (int(menor) +int(n))%int(N)
+        inicio = (int(n) + int(alcance))%int(N)
+        ate = (int(n) + int(2**(i+1)) - 1)%int(N)
+        nosfilhos[int(n)].send(str.encode('Atualizar'))
+        msg = nosfilhos[int(n)].recv(1024)
+        nosfilhos[int(n)].send(str.encode(str(inicio)))
+        msg = nosfilhos[int(n)].recv(1024)
+        nosfilhos[int(n)].send(str.encode(str(sucessor)))
+        msg = nosfilhos[int(n)].recv(1024)
+        nosfilhos[int(n)].send(str.encode(str(ate)))
+        msg = nosfilhos[int(n)].recv(1024)
+        nosfilhos[int(n)].send(str.encode(str(portas[int(sucessor)])))
+        msg = nosfilhos[int(n)].recv(1024)
 
 def iniciaServidor():
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

@@ -18,7 +18,7 @@ estado = []
 inicio = []
 sucessor = {}
 ate = {}
-
+porta = {}
 
 def iniciaServidor(HOST, PORT):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -57,7 +57,28 @@ def atendeRequisicoes(clisock, endr):
         estado[0] = 0
         clisock.send(str.encode(str(estado[0])))
 
-
+    if (dataD == "Atualizar"):
+        clisock.send(str.encode('Estou ativo'))
+        time.sleep(1)
+        msg = clisock.recv(1024)
+        no = str(msg, encoding = 'utf-8')
+        inicio.append(int(no))
+        clisock.send(str.encode(no))
+        time.sleep(1)
+        msg = clisock.recv(1024)
+        suc = str(msg, encoding = 'utf-8')
+        sucessor[int(no)] = int(suc)
+        clisock.send(str.encode(suc))
+        time.sleep(1)
+        msg = clisock.recv(1024)
+        at = str(msg, encoding = 'utf-8')
+        ate[int(no)] = int(at)
+        clisock.send(str.encode(at))
+        time.sleep(1)
+        msg = clisock.recv(1024)
+        port = str(msg, encoding = 'utf-8')
+        porta[int(no)] = int(port)
+        clisock.send(str.encode(port))
 
     if (dataD == "Buscar"):
         if(estado[0] == 0):
